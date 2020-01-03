@@ -9,28 +9,11 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strconv"
 	"strings"
 )
 
 const stub = 10.0
-
-func loadFile(str string) string {
-	if len(str) == 0 {
-		return ""
-	}
-
-	dat, err := ioutil.ReadFile(str)
-	hasErr := err != nil
-	if hasErr {
-		fmt.Printf("There was an error: %g\n", err)
-		return ""
-	}
-
-	return strings.TrimSpace(string(dat))
-	//return string(bytes.Trim(dat, "\x00"))
-}
 
 func ConvertToSlice(str string) []int {
 	if len(str) == 0 {
