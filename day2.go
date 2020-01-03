@@ -114,7 +114,7 @@ func day2Part2() {
 	fmt.Printf("No result found!\n")
 }
 
-func main() {
+func day2() {
 	day1Part1()
 	day2Part2()
 }
