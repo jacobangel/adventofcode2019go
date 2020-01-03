@@ -6,6 +6,11 @@ import (
 	"strings"
 )
 
+type Point struct {
+	x int
+	y int
+}
+
 func Abs(a int) int {
 	if a < 0 {
 		return a * -1
@@ -13,22 +18,56 @@ func Abs(a int) int {
 	return a
 }
 
+func ConvertToCoords(inputData string) [][]Point {
+	fmt.Printf("The input is \n'%s' \n", inputData)
+
+	wireList := strings.Split(inputData, "\n")
+	wires := make([][]Point, len(wireList))
+	for wireIndex, line := range wireList {
+		coordList := strings.Split(strings.TrimSpace(line), ",")
+		lastCoord := Point{0, 0}
+		wires[wireIndex] = append(wires[wireIndex], lastCoord)
+		for _, coord := range coordList {
+			dir := string(coord[0])
+			count, _ := strconv.Atoi(coord[1:])
+			nextCoord := Point{lastCoord.x, lastCoord.y}
+			switch dir {
+			case "U":
+				nextCoord.y += count
+			case "D":
+				nextCoord.y -= count
+			case "L":
+				nextCoord.x -= count
+			case "R":
+				nextCoord.x += count
+			}
+			wires[wireIndex] = append(wires[wireIndex], nextCoord)
+			//			fmt.Printf("%s: %s %d\n", coord, dir, count)
+			lastCoord = nextCoord
+		}
+	}
+	return wires
+}
+
 func getManhattanDistance(inputData string) int {
 	wires := ConvertToCoords(inputData)
-	fmt.Printf("%v\n", wires)
 	wireA := wires[0]
 	wireB := wires[1]
+	fmt.Printf("Wire A: %v\nWire B: %v\n", wireA, wireB)
 	distance := 100000000
 	// This is where we would do a min heap or some shit like that.
 	for i := 0; i < len(wireA)-1; i++ {
 		// this is where we'd check for an intersection, and then
 		// find the shortest path.
-		line := [][2]int{wireA[i], wireA[i+1]}
-		intersection, hasIntersect := getIntersects(line, wireB)
+		line := []Point{wireA[i], wireA[i+1]}
+		intersections, hasIntersect := getIntersects(line, wireB)
 		if hasIntersect {
-			localDistance := Abs(intersection[0]) + Abs(intersection[1])
-			if localDistance < distance {
-				distance = localDistance
+			for _, intersection := range intersections {
+				localDistance := Abs(intersection.x) + Abs(intersection.y)
+				if localDistance < distance && localDistance != 0 {
+					fmt.Printf("Found new winner: %v, LD: %d\n", intersection, localDistance)
+					distance = localDistance
+				}
 			}
 		}
 
@@ -37,76 +76,81 @@ func getManhattanDistance(inputData string) int {
 	return distance
 }
 
-func getIntersects(line [][2]int, wire [][2]int) ([2]int, bool) {
+func getIntersects(line []Point, wire []Point) ([]Point, bool) {
 	if len(wire) < 2 {
-		return [2]int{0, 0}, false
+		fmt.Println("Wire is too short!")
+		return []Point{Point{0, 0}}, false
 	}
 	// you shoudl just frickin Coord type dude.
-	intersectionsList := make([][2]int, 1)
+	intersectionsList := make([]Point, 1)
 
 	for i := 0; i < len(wire)-1; i++ {
-		wireSection := [][2]int{wire[i], wire[i+1]}
-		intersection, hasIntersect := intersect(line, wireSection)
+		wireSection := []Point{wire[i], wire[i+1]}
+		intersection, hasIntersect := getIntersection(line, wireSection)
 		if hasIntersect {
+			fmt.Printf("-> hasIntersect: %v, %v: %v\n", line, wireSection, intersection)
 			intersectionsList = append(intersectionsList, intersection)
 		}
 	}
 
-	// fmt.Printf("%v\n", intersectionsList)
+	if len(intersectionsList) > 0 {
+		return intersectionsList, true
+	}
 
-	return [2]int{0, 0}, false
+	return []Point{Point{0, 0}}, false
 }
 
 const x = 0
 const y = 1
 
-func intersect(lineA [][2]int, lineB [][2]int) ([2]int, bool) {
-	// we know they intersect if one's xs are > other xs
-	// and
-	if lineA[0][x] < lineB[0][x] && lineA[1][x] > lineB[1][x] &&
-		lineA[0][y] > lineB[0][y] && lineA[1][y] < lineB[1][y] { // if this isn't a sign you should make a coord...
-		return [2]int{lineA[1][x], lineB[1][y]}, true
-	}
-	if lineA[0][y] < lineB[0][y] && lineA[1][y] > lineB[1][y] &&
-		lineA[0][x] > lineB[0][x] && lineA[1][x] < lineB[1][x] { // if this isn't a sign you should make a coord...
-		return [2]int{lineB[1][x], lineA[1][y]}, true
-	}
-
-	return [2]int{}, false
+func getLineParts(A Point, B Point) (int, int, int) {
+	a1 := B.y - A.y
+	b1 := A.x - B.x
+	c1 := a1*A.x + b1*A.y
+	return a1, b1, c1
+}
+func isCenter(point Point) bool {
+	return point.x == 0 && point.y == 0
 }
 
-func ConvertToCoords(inputData string) [][][2]int {
-	fmt.Printf("The input is \n'%s' \n", inputData)
-
-	wireList := strings.Split(inputData, "\n")
-	wires := make([][][2]int, len(wireList))
-	for wireIndex, line := range wireList {
-		coordList := strings.Split(line, ",")
-		lastCoord := [2]int{0, 0}
-		for _, coord := range coordList {
-			dir := string(coord[0])
-			count, _ := strconv.Atoi(coord[1:])
-			nextCoord := [2]int{lastCoord[0], lastCoord[1]}
-			switch dir {
-			case "U":
-				nextCoord[1] -= count
-			case "D":
-				nextCoord[1] += count
-			case "L":
-				nextCoord[0] -= count
-			case "R":
-				nextCoord[0] += count
-			}
-			wires[wireIndex] = append(wires[wireIndex], nextCoord)
-			//			fmt.Printf("%s: %s %d\n", coord, dir, count)
-			lastCoord = nextCoord
-		}
-	}
-	//fmt.Printf("Num coords %d\n%v", len(wires), wires)
-
-	return wires
+func isEq(a Point, b Point) bool {
+	return a.x == b.x && a.y == b.y
 }
 
+// it would be esasier at this piont to make a two item grid
+// and simpley
+func getIntersection(lineA []Point, lineB []Point) (Point, bool) {
+	//a1x + b1y = c1
+	//a2x + b2y = c2
+	A := lineA[0]
+	B := lineA[1]
+	P := lineB[0]
+	Q := lineB[1]
+
+	a1, b1, c1 := getLineParts(A, B)
+	a2, b2, c2 := getLineParts(P, Q)
+	// (a1b2 – a2b1) x = c1b2 – c2b1
+	determinant := a1*b2 - a2*b1
+	if determinant == 0 {
+		return Point{-1, -1}, false
+	}
+	x := (b2*c1 - b1*c2) / determinant
+	y := (a1*c2 - a2*c1) / determinant
+	foundPoint := Point{x, y}
+	isTrueIntersect := pointInSegment(lineA, foundPoint) && pointInSegment(lineB, foundPoint)
+
+	return foundPoint, isTrueIntersect
+}
+func pointInSegment(segment []Point, point Point) bool {
+	x := point.x
+	y := point.y
+	P := segment[0]
+	Q := segment[1]
+	return (x <= P.x || x <= Q.x) &&
+		(x >= Q.x || x >= P.x) &&
+		(y <= P.y || y <= Q.y) &&
+		(y >= P.y || y >= Q.y)
+}
 func day31() {
 	fmt.Println("Day 3, Part 1")
 	// read in the values
