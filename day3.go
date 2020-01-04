@@ -12,49 +12,46 @@ type Point struct {
 	y int
 }
 
-func Abs(a int) int {
-	if a < 0 {
-		return a * -1
-	}
-	return a
-}
-
-func ConvertToCoords(inputData string) [][]Point {
-	fmt.Printf("The input is \n'%s' \n", inputData)
-
+func ParseWireInput(inputData string) [][]Point {
 	wireList := strings.Split(inputData, "\n")
 	wires := make([][]Point, len(wireList))
 	for wireIndex, line := range wireList {
-		coordList := strings.Split(strings.TrimSpace(line), ",")
-		lastCoord := Point{0, 0}
-		wires[wireIndex] = append(wires[wireIndex], lastCoord)
-		for _, coord := range coordList {
-			dir := string(coord[0])
-			count, _ := strconv.Atoi(coord[1:])
-			nextCoord := Point{lastCoord.x, lastCoord.y}
-			switch dir {
-			case "U":
-				nextCoord.y += count
-			case "D":
-				nextCoord.y -= count
-			case "L":
-				nextCoord.x -= count
-			case "R":
-				nextCoord.x += count
-			}
-			wires[wireIndex] = append(wires[wireIndex], nextCoord)
-			//			fmt.Printf("%s: %s %d\n", coord, dir, count)
-			lastCoord = nextCoord
-		}
+		wires[wireIndex] = ConvertStrToCoords(line)
 	}
+
 	return wires
 }
 
+func ConvertStrToCoords(line string) []Point {
+	wire := make([]Point, 1)
+	coordList := strings.Split(strings.TrimSpace(line), ",")
+	lastCoord := Point{0, 0}
+	wire = append(wire, lastCoord)
+	for _, coord := range coordList {
+		dir := string(coord[0])
+		count, _ := strconv.Atoi(coord[1:])
+		nextCoord := Point{lastCoord.x, lastCoord.y}
+		switch dir {
+		case "U":
+			nextCoord.y += count
+		case "D":
+			nextCoord.y -= count
+		case "L":
+			nextCoord.x -= count
+		case "R":
+			nextCoord.x += count
+		}
+		wire = append(wire, nextCoord)
+		lastCoord = nextCoord
+	}
+	return wire
+}
+
 func getManhattanDistance(inputData string) int {
-	wires := ConvertToCoords(inputData)
+	wires := ParseWireInput(inputData)
 	wireA := wires[0]
 	wireB := wires[1]
-	fmt.Printf("Wire A: %v\nWire B: %v\n", wireA, wireB)
+	// fmt.Printf("Wire A: %v\nWire B: %v\n", wireA, wireB)
 	distance := 100000000
 	// This is where we would do a min heap or some shit like that.
 	for i := 0; i < len(wireA)-1; i++ {
@@ -66,7 +63,7 @@ func getManhattanDistance(inputData string) int {
 			for _, intersection := range intersections {
 				localDistance := determineManhattanDistance(intersection)
 				if localDistance < distance && localDistance != 0 {
-					fmt.Printf("Found new winner: %v, LD: %d\n", intersection, localDistance)
+					// fmt.Printf("Found new winner: %v, LD: %d\n", intersection, localDistance)
 					distance = localDistance
 				}
 			}
@@ -78,10 +75,10 @@ func getManhattanDistance(inputData string) int {
 }
 
 func getWireDistance(inputData string) int {
-	wires := ConvertToCoords(inputData)
+	wires := ParseWireInput(inputData)
 	wireA := wires[0]
 	wireB := wires[1]
-	fmt.Printf("Wire A: %v\nWire B: %v\n", wireA, wireB)
+	// fmt.Printf("Wire A: %v\nWire B: %v\n", wireA, wireB)
 	minDistA := getWireDists(wireA, wireB)
 
 	return minDistA
@@ -111,10 +108,10 @@ func kludgeFindPointOnLine(a Point, wire []Point) (int, []Point) {
 		if hasIntersect {
 			increment := 1
 			if isEq(a, wire[i+1]) {
-				increment = 2;
+				increment = 2
 			}
-			wireToIntersection := make([]Point, i + 1)
-			copy(wireToIntersection, wire[0:i + increment])
+			wireToIntersection := make([]Point, i+1)
+			copy(wireToIntersection, wire[0:i+increment])
 			wireToIntersection = append(wireToIntersection, a)
 			localDistance := determineWireDistance(wireToIntersection)
 			return localDistance, wireToIntersection
@@ -122,7 +119,6 @@ func kludgeFindPointOnLine(a Point, wire []Point) (int, []Point) {
 	}
 	return 0, []Point{}
 }
-
 
 func getWireDists(wireA []Point, wireB []Point) int {
 	distance := 100000000
@@ -137,14 +133,11 @@ func getWireDists(wireA []Point, wireB []Point) int {
 				if intersection.y == 0 && intersection.x == 0 {
 					continue
 				}
-				localDistance, newWireA := kludgeFindPointOnLine(intersection, wireA)
-				otherDistance, newWireB := kludgeFindPointOnLine(intersection, wireB)
-				combinedDist := localDistance + otherDistance;
+				localDistance, _ := kludgeFindPointOnLine(intersection, wireA)
+				otherDistance, _ := kludgeFindPointOnLine(intersection, wireB)
+				combinedDist := localDistance + otherDistance
 
 				if combinedDist < distance && combinedDist != 0 {
-					fmt.Printf("Found new winner: %v, LD: %d\n", intersection, combinedDist)
-					fmt.Printf("WireA: %v, \nnewWireA: %v, \nWireB: %v\nnewWireB: %v\n", wireA, newWireA, wireB,newWireB)
-					fmt.Printf("combined : %d, wireA: %d, wireB: %d\n\n", combinedDist, localDistance, otherDistance)
 					distance = combinedDist
 				}
 			}
@@ -165,7 +158,7 @@ func getIntersects(line []Point, wire []Point) ([]Point, bool) {
 		wireSection := []Point{wire[i], wire[i+1]}
 		intersection, hasIntersect := getIntersection(line, wireSection)
 		if hasIntersect {
-			fmt.Printf("-> hasIntersect: %v, %v: %v\n", line, wireSection, intersection)
+			// fmt.Printf("-> hasIntersect: %v, %v: %v\n", line, wireSection, intersection)
 			intersectionsList = append(intersectionsList, intersection)
 		}
 	}

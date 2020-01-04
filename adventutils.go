@@ -20,3 +20,11 @@ func loadFile(str string) string {
 
 	return strings.TrimSpace(string(dat))
 }
+
+
+func Abs(a int) int {
+	if a < 0 {
+		return a * -1
+	}
+	return a
+}

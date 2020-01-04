@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -27,8 +26,6 @@ func TestArraySlicing(t *testing.T) {
 	localSlice := []int{1, 2, 3, 4}
 	if !testEq(sliceOfData, localSlice) {
 		t.Errorf("The slices were not equal: %v, %v", sliceOfData, localSlice)
-	} else {
-		fmt.Printf("The slices were equal\n")
 	}
 
 	sliceWithNull := ConvertToSlice("1,2,3,4,6")

@@ -2,9 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"math"
 	"testing"
 )
+
+func TestAssertExample(t *testing.T) {
+	assert.True(t, true, "True is true!")
+}
 
 func Day3TestingStub(t *testing.T) {
 	fmt.Println("We are printing something.")
@@ -51,8 +56,6 @@ func TestIntersect(t *testing.T) {
 	}
 	if inter1.x != 5 || inter1.y != 0 {
 		t.Errorf("We got the wrong coordinate: %v", inter1)
-	} else {
-		fmt.Printf("%v\n", inter1)
 	}
 
 	inter2, hasInter2 := getIntersection(point2, point1)
@@ -61,10 +64,7 @@ func TestIntersect(t *testing.T) {
 	}
 	if inter2.x != 5 || inter2.y != 0 {
 		t.Errorf("We got the wrong coordinate: %v", inter2)
-	} else {
-		fmt.Printf("%v\n", inter2)
 	}
-
 }
 
 func TestIntersect2(t *testing.T) {
@@ -84,8 +84,6 @@ func TestIntersect2(t *testing.T) {
 	}
 	if inter2.x != 2 || inter2.y != 0 {
 		t.Errorf("We got the wrong coordinate: %v, expected [2, 0]", inter2)
-	} else {
-		fmt.Printf("Found right coords: %v\n", inter2)
 	}
 
 	inter1, hasInter1 := getIntersection(point1, point2)
@@ -94,8 +92,6 @@ func TestIntersect2(t *testing.T) {
 	}
 	if inter1.x != 2 || inter1.y != 0 {
 		t.Errorf("We got the wrong coordinate: %v", inter1)
-	} else {
-		fmt.Printf("Found right coords: %v\n", inter1)
 	}
 
 }
@@ -182,7 +178,7 @@ func TestLineLengthRoundsValues(t *testing.T) {
 }
 
 func TestDetermineWireDistance(t *testing.T) {
-	wires := ConvertToCoords(data0)
+	wires := ParseWireInput(data0)
 	wire1 := wires[0]
 	wire2 := wires[1]
 	dist := determineWireDistance(wire1)
