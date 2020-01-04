@@ -181,12 +181,12 @@ func TestDetermineWireDistance(t *testing.T) {
 	wires := ParseWireInput(data0)
 	wire1 := wires[0]
 	wire2 := wires[1]
-	dist := determineWireDistance(wire1)
+	dist := calculateWireLength(wire1)
 	expected := 21
 	if dist != expected {
 		t.Errorf("Expected %d, got %d instead", expected, dist)
 	}
-	dist = determineWireDistance(wire2)
+	dist = calculateWireLength(wire2)
 	expected = 21
 	if dist != expected {
 		t.Errorf("Expected %d, got %d instead", expected, dist)

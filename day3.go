@@ -22,29 +22,45 @@ func ParseWireInput(inputData string) [][]Point {
 	return wires
 }
 
+type Instruction struct {
+	direction string
+	step      int
+}
+
 func ConvertStrToCoords(line string) []Point {
 	wire := make([]Point, 1)
-	coordList := strings.Split(strings.TrimSpace(line), ",")
+	rawInstructionList := strings.Split(strings.TrimSpace(line), ",")
 	lastCoord := Point{0, 0}
 	wire = append(wire, lastCoord)
-	for _, coord := range coordList {
-		dir := string(coord[0])
-		count, _ := strconv.Atoi(coord[1:])
-		nextCoord := Point{lastCoord.x, lastCoord.y}
-		switch dir {
-		case "U":
-			nextCoord.y += count
-		case "D":
-			nextCoord.y -= count
-		case "L":
-			nextCoord.x -= count
-		case "R":
-			nextCoord.x += count
-		}
+	for _, rawInstruction := range rawInstructionList {
+		instruction := strToInstruction(rawInstruction)
+		nextCoord := getNextPointFromInstruction(lastCoord, instruction)
 		wire = append(wire, nextCoord)
 		lastCoord = nextCoord
 	}
 	return wire
+}
+
+func strToInstruction(rawInstruction string) Instruction {
+	dir := string(rawInstruction[0])
+	step, _ := strconv.Atoi(rawInstruction[1:])
+	return Instruction{dir, step}
+}
+
+func getNextPointFromInstruction(previousCoord Point, instr Instruction) Point {
+	newCoord := Point{previousCoord.x, previousCoord.y}
+	step := instr.step
+	switch instr.direction {
+	case "U":
+		newCoord.y += step
+	case "D":
+		newCoord.y -= step
+	case "L":
+		newCoord.x -= step
+	case "R":
+		newCoord.x += step
+	}
+	return newCoord
 }
 
 func getManhattanDistance(inputData string) int {
@@ -55,10 +71,8 @@ func getManhattanDistance(inputData string) int {
 	distance := 100000000
 	// This is where we would do a min heap or some shit like that.
 	for i := 0; i < len(wireA)-1; i++ {
-		// this is where we'd check for an intersection, and then
-		// find the shortest path.
 		line := []Point{wireA[i], wireA[i+1]}
-		intersections, hasIntersect := getIntersects(line, wireB)
+		intersections, hasIntersect := getIntersectionList(line, wireB)
 		if hasIntersect {
 			for _, intersection := range intersections {
 				localDistance := determineManhattanDistance(intersection)
@@ -74,21 +88,18 @@ func getManhattanDistance(inputData string) int {
 	return distance
 }
 
-func getWireDistance(inputData string) int {
-	wires := ParseWireInput(inputData)
-	wireA := wires[0]
-	wireB := wires[1]
-	// fmt.Printf("Wire A: %v\nWire B: %v\n", wireA, wireB)
-	minDistA := getWireDists(wireA, wireB)
-
-	return minDistA
-}
-
 func determineManhattanDistance(point Point) int {
 	return Abs(point.x) + Abs(point.y)
 }
 
-func determineWireDistance(wire []Point) int {
+func getWireDistance(inputData string) int {
+	wires := ParseWireInput(inputData)
+	wireA := wires[0]
+	wireB := wires[1]
+	return getShortestIntersections(wireA, wireB)
+}
+
+func calculateWireLength(wire []Point) int {
 	distance := 0
 	for i := 0; i < len(wire)-1; i++ {
 		distance += getLineLength(wire[i], wire[i+1])
@@ -101,6 +112,11 @@ func getLineLength(a Point, b Point) int {
 	return int(math.Round(math.Sqrt(float64(baseDist))))
 }
 
+/**
+ * This entire function exists because I am a morally bankrupt programmer.
+ * Basically it takes a line and find out where a point on it "fits", and
+ * returns the length.
+ */
 func kludgeFindPointOnLine(a Point, wire []Point) (int, []Point) {
 	for i := 0; i < len(wire)-1; i++ {
 		wireSection := []Point{wire[i], wire[i+1]}
@@ -113,21 +129,21 @@ func kludgeFindPointOnLine(a Point, wire []Point) (int, []Point) {
 			wireToIntersection := make([]Point, i+1)
 			copy(wireToIntersection, wire[0:i+increment])
 			wireToIntersection = append(wireToIntersection, a)
-			localDistance := determineWireDistance(wireToIntersection)
+			localDistance := calculateWireLength(wireToIntersection)
 			return localDistance, wireToIntersection
 		}
 	}
 	return 0, []Point{}
 }
 
-func getWireDists(wireA []Point, wireB []Point) int {
+func getShortestIntersections(wireA []Point, wireB []Point) int {
 	distance := 100000000
 	// This is where we would do a min heap or some shit like that.
 	for i := 0; i < len(wireA)-1; i++ {
 		// this is where we'd check for an intersection, and then
 		// find the shortest path.
 		line := []Point{wireA[i], wireA[i+1]}
-		intersections, hasIntersect := getIntersects(line, wireB)
+		intersections, hasIntersect := getIntersectionList(line, wireB)
 		if hasIntersect {
 			for _, intersection := range intersections {
 				if intersection.y == 0 && intersection.x == 0 {
@@ -146,19 +162,17 @@ func getWireDists(wireA []Point, wireB []Point) int {
 	return distance
 }
 
-func getIntersects(line []Point, wire []Point) ([]Point, bool) {
+func getIntersectionList(line []Point, wire []Point) ([]Point, bool) {
 	if len(wire) < 2 {
 		fmt.Println("Wire is too short!")
 		return []Point{Point{0, 0}}, false
 	}
-	// you shoudl just frickin Coord type dude.
 	intersectionsList := make([]Point, 1)
 
 	for i := 0; i < len(wire)-1; i++ {
 		wireSection := []Point{wire[i], wire[i+1]}
 		intersection, hasIntersect := getIntersection(line, wireSection)
 		if hasIntersect {
-			// fmt.Printf("-> hasIntersect: %v, %v: %v\n", line, wireSection, intersection)
 			intersectionsList = append(intersectionsList, intersection)
 		}
 	}
@@ -169,9 +183,6 @@ func getIntersects(line []Point, wire []Point) ([]Point, bool) {
 
 	return []Point{Point{0, 0}}, false
 }
-
-const x = 0
-const y = 1
 
 func getLineParts(A Point, B Point) (int, int, int) {
 	a1 := B.y - A.y
@@ -199,9 +210,9 @@ func getIntersection(lineA []Point, lineB []Point) (Point, bool) {
 	if (isCenter(A) || isCenter(B)) || (isCenter(P) || isCenter(Q)) {
 		return Point{0, 0}, false
 	}
-	// if isEq(A, P) || isEq(A, Q) || isEq(B, P) || isEq(B, Q) {
-	// 	return Point{0, 0}, false
-	// }
+	if isEq(A, P) || isEq(A, Q) || isEq(B, P) || isEq(B, Q) {
+		return Point{0, 0}, false
+	}
 	a1, b1, c1 := getLineParts(A, B)
 	a2, b2, c2 := getLineParts(P, Q)
 	// (a1b2 – a2b1) x = c1b2 – c2b1
@@ -227,12 +238,14 @@ func pointInSegment(segment []Point, point Point) bool {
 		(y <= P.y || y <= Q.y) &&
 		(y >= P.y || y >= Q.y)
 }
+
 func day31() {
 	fmt.Println("Day 3, Part 1")
 	// read in the values
 	data := loadFile("./day3-input.txt")
 	distance := getManhattanDistance(data)
 	fmt.Printf("The manhattan distance is %d\n", distance)
+	fmt.Println("The correct answer was: '870'")
 }
 
 func day32() {
@@ -240,6 +253,7 @@ func day32() {
 	data := loadFile("./day3-input.txt")
 	distance := getWireDistance(data)
 	fmt.Printf("The wire step distance is %d\n", distance)
+	fmt.Println("The correct answer was: '13698'")
 }
 
 func day3() {
