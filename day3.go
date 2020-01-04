@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -63,7 +64,7 @@ func getManhattanDistance(inputData string) int {
 		intersections, hasIntersect := getIntersects(line, wireB)
 		if hasIntersect {
 			for _, intersection := range intersections {
-				localDistance := Abs(intersection.x) + Abs(intersection.y)
+				localDistance := determineManhattanDistance(intersection)
 				if localDistance < distance && localDistance != 0 {
 					fmt.Printf("Found new winner: %v, LD: %d\n", intersection, localDistance)
 					distance = localDistance
@@ -73,6 +74,62 @@ func getManhattanDistance(inputData string) int {
 
 	}
 
+	return distance
+}
+
+func getWireDistance(inputData string) int {
+	wires := ConvertToCoords(inputData)
+	wireA := wires[0]
+	wireB := wires[1]
+	fmt.Printf("Wire A: %v\nWire B: %v\n", wireA, wireB)
+	minDistA := getWireDists(wireA, wireB)
+	minDistB := getWireDists(wireB, wireA)
+	if minDistA > minDistB {
+		return minDistB
+	}
+	return minDistA
+}
+
+func determineManhattanDistance(point Point) int {
+	return Abs(point.x) + Abs(point.y)
+}
+
+func determineWireDistance(wire []Point) int {
+	distance := 0
+	for i := 0; i < len(wire)-1; i++ {
+		distance += getLineLength(wire[i], wire[i+1])
+	}
+	return distance
+}
+
+func getLineLength(a Point, b Point) int {
+	return integer(math.Round(math.Sqrt(float64((a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y))))
+}
+
+func getWireDists(wireA []Point, wireB []Point) int {
+	distance := 100000000
+	// This is where we would do a min heap or some shit like that.
+	for i := 0; i < len(wireA)-1; i++ {
+		// this is where we'd check for an intersection, and then
+		// find the shortest path.
+		line := []Point{wireA[i], wireA[i+1]}
+		intersections, hasIntersect := getIntersects(line, wireB)
+		if hasIntersect {
+			for _, intersection := range intersections {
+				if intersection.y == 0 && intersection.x == 0 {
+					continue
+				}
+				wireToIntersection := append(wireA[0:i], intersection)
+
+				localDistance := determineWireDistance(wireToIntersection)
+				fmt.Printf("localDistance : %d, wire: %v\n", localDistance, wireToIntersection)
+				if localDistance < distance && localDistance != 0 {
+					fmt.Printf("Found new winner: %v, LD: %d\n", intersection, localDistance)
+					distance = localDistance
+				}
+			}
+		}
+	}
 	return distance
 }
 
@@ -126,7 +183,12 @@ func getIntersection(lineA []Point, lineB []Point) (Point, bool) {
 	B := lineA[1]
 	P := lineB[0]
 	Q := lineB[1]
-
+	if (isCenter(A) || isCenter(B)) || (isCenter(P) || isCenter(Q)) {
+		return Point{0, 0}, false
+	}
+	// if isEq(A, P) || isEq(A, Q) || isEq(B, P) || isEq(B, Q) {
+	// 	return Point{0, 0}, false
+	// }
 	a1, b1, c1 := getLineParts(A, B)
 	a2, b2, c2 := getLineParts(P, Q)
 	// (a1b2 – a2b1) x = c1b2 – c2b1
@@ -141,6 +203,7 @@ func getIntersection(lineA []Point, lineB []Point) (Point, bool) {
 
 	return foundPoint, isTrueIntersect
 }
+
 func pointInSegment(segment []Point, point Point) bool {
 	x := point.x
 	y := point.y
@@ -161,6 +224,9 @@ func day31() {
 
 func day32() {
 	fmt.Println("Day 3, Part 2")
+	data := loadFile("./day3-input.txt")
+	distance := getWireDistance(data)
+	fmt.Printf("The manhattan distance is %d\n", distance)
 }
 
 func day3() {
