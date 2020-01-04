@@ -83,10 +83,7 @@ func getWireDistance(inputData string) int {
 	wireB := wires[1]
 	fmt.Printf("Wire A: %v\nWire B: %v\n", wireA, wireB)
 	minDistA := getWireDists(wireA, wireB)
-	minDistB := getWireDists(wireB, wireA)
-	if minDistA > minDistB {
-		return minDistB
-	}
+
 	return minDistA
 }
 
@@ -103,8 +100,29 @@ func determineWireDistance(wire []Point) int {
 }
 
 func getLineLength(a Point, b Point) int {
-	return integer(math.Round(math.Sqrt(float64((a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y))))
+	baseDist := (a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y)
+	return int(math.Round(math.Sqrt(float64(baseDist))))
 }
+
+func kludgeFindPointOnLine(a Point, wire []Point) (int, []Point) {
+	for i := 0; i < len(wire)-1; i++ {
+		wireSection := []Point{wire[i], wire[i+1]}
+		hasIntersect := pointInSegment(wireSection, a)
+		if hasIntersect {
+			increment := 1
+			if isEq(a, wire[i+1]) {
+				increment = 2;
+			}
+			wireToIntersection := make([]Point, i + 1)
+			copy(wireToIntersection, wire[0:i + increment])
+			wireToIntersection = append(wireToIntersection, a)
+			localDistance := determineWireDistance(wireToIntersection)
+			return localDistance, wireToIntersection
+		}
+	}
+	return 0, []Point{}
+}
+
 
 func getWireDists(wireA []Point, wireB []Point) int {
 	distance := 100000000
@@ -119,13 +137,15 @@ func getWireDists(wireA []Point, wireB []Point) int {
 				if intersection.y == 0 && intersection.x == 0 {
 					continue
 				}
-				wireToIntersection := append(wireA[0:i], intersection)
+				localDistance, newWireA := kludgeFindPointOnLine(intersection, wireA)
+				otherDistance, newWireB := kludgeFindPointOnLine(intersection, wireB)
+				combinedDist := localDistance + otherDistance;
 
-				localDistance := determineWireDistance(wireToIntersection)
-				fmt.Printf("localDistance : %d, wire: %v\n", localDistance, wireToIntersection)
-				if localDistance < distance && localDistance != 0 {
-					fmt.Printf("Found new winner: %v, LD: %d\n", intersection, localDistance)
-					distance = localDistance
+				if combinedDist < distance && combinedDist != 0 {
+					fmt.Printf("Found new winner: %v, LD: %d\n", intersection, combinedDist)
+					fmt.Printf("WireA: %v, \nnewWireA: %v, \nWireB: %v\nnewWireB: %v\n", wireA, newWireA, wireB,newWireB)
+					fmt.Printf("combined : %d, wireA: %d, wireB: %d\n\n", combinedDist, localDistance, otherDistance)
+					distance = combinedDist
 				}
 			}
 		}
@@ -226,7 +246,7 @@ func day32() {
 	fmt.Println("Day 3, Part 2")
 	data := loadFile("./day3-input.txt")
 	distance := getWireDistance(data)
-	fmt.Printf("The manhattan distance is %d\n", distance)
+	fmt.Printf("The wire step distance is %d\n", distance)
 }
 
 func day3() {
