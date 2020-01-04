@@ -98,6 +98,9 @@ func day2Part2() {
 }
 
 func day2() {
+	fmt.Println("Day 2");
+	fmt.Println("---------");
 	day1Part1()
 	day2Part2()
+  fmt.Println();
 }

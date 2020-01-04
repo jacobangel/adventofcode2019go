@@ -257,6 +257,9 @@ func day32() {
 }
 
 func day3() {
+	fmt.Println("Day 3")
+	fmt.Println("---------")
 	day31()
 	day32()
+	fmt.Println()
 }
