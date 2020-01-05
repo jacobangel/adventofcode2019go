@@ -9,28 +9,9 @@ package main
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 )
 
 const stub = 10.0
-
-func ConvertToSlice(str string) []int {
-	if len(str) == 0 {
-		return []int{}
-	}
-	retValue := []int{}
-	for index, item := range strings.Split(str, ",") {
-		intVal, err := strconv.Atoi(item)
-		if err != nil {
-			fmt.Printf("Could not convert value '%s' of bucket %d to str. %g", item, index, err)
-			return retValue
-		}
-		// fmt.Printf("-- value: %d, index: %d\n", intVal, index)
-		retValue = append(retValue, intVal)
-	}
-	return retValue
-}
 
 func RunProgram(data []int) int {
 	// read slice of 4
@@ -98,9 +79,9 @@ func day2Part2() {
 }
 
 func day2() {
-	fmt.Println("Day 2");
-	fmt.Println("---------");
+	fmt.Println("Day 2")
+	fmt.Println("---------")
 	day1Part1()
 	day2Part2()
-  fmt.Println();
+	fmt.Println()
 }
