@@ -38,20 +38,20 @@ func TestTakeDigits(t *testing.T) {
 }
 
 
-func testParseInstruction(t *testing.T) {
+func TestParseInstruction(t *testing.T) {
 	instruction, paramOperations := parseInstruction(1002);
-	assert.Equal(t, instruction, 2)
+	assert.Equal(t, instruction, MULT)
 	assert.Equal(t, paramOperations, []ParameterMode{POSITION, IMMEDIATE, POSITION})
 
 	instruction, paramOperations = parseInstruction(1003);
-	assert.Equal(t, instruction, 3)
+	assert.Equal(t, instruction, STORE)
 	assert.Equal(t, paramOperations, []ParameterMode{POSITION})
 
 	instruction, paramOperations = parseInstruction(11001);
-	assert.Equal(t, instruction, 1)
-	assert.Equal(t, paramOperations, []ParameterMode{IMMEDIATE, IMMEDIATE, POSITION})
+	assert.Equal(t, instruction, ADD)
+	assert.Equal(t, paramOperations, []ParameterMode{POSITION, IMMEDIATE, IMMEDIATE })
 
 	instruction, paramOperations = parseInstruction(1101);
-	assert.Equal(t, instruction, 1)
-	assert.Equal(t, paramOperations, []ParameterMode{POSITION, IMMEDIATE, IMMEDIATE })
+	assert.Equal(t, instruction, ADD)
+	assert.Equal(t, paramOperations, []ParameterMode{IMMEDIATE, IMMEDIATE, POSITION })
 }

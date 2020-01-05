@@ -12,6 +12,10 @@ const (
 	MULT
 	STORE
 	GET
+	JUMP_IF_TRUE
+	JUMP_IF_FALSE
+	LESS_THAN
+	EQUALS
 	STOP Opcode = 99
 )
 
@@ -23,11 +27,15 @@ const (
 )
 
 var InstructionLen = map[Opcode]int{
-	ADD:   3,
-	MULT:  3,
-	STORE: 1,
-	GET:   1,
-	STOP:  1,
+	ADD:           3,
+	MULT:          3,
+	STORE:         1,
+	GET:           1,
+	STOP:          1,
+	JUMP_IF_FALSE: 2,
+	JUMP_IF_TRUE:  2,
+	LESS_THAN:     3,
+	EQUALS:        3,
 }
 
 func takeDigits(cmd int, count int) (int, int) {
@@ -70,7 +78,13 @@ func parseInstruction(cmd int) (Opcode, []ParameterMode) {
 
 func handleReadMemory(reference []int, mode []ParameterMode, data []int, index int) int {
 	address := reference[index]
-	if mode[index] == IMMEDIATE {
+	reversed := len(mode) - index - 1
+	reversed = index
+	if address < 0 || address > len(data)-1 {
+		fmt.Printf("%d %v %v\n", address, reference, mode)
+		return address
+	}
+	if mode[reversed] == IMMEDIATE {
 		return address
 	}
 	return data[address]
@@ -108,6 +122,42 @@ func InterpretProgram(data []int, input int) int {
 		case STORE:
 			fmt.Printf("Storing %d in register %d\n", input, arguments[0])
 			data[arguments[0]] = input
+		case JUMP_IF_FALSE:
+			a := handleReadMemory(arguments, readParamOpts, data, 0)
+			b := handleReadMemory(arguments, readParamOpts, data, 1)
+			if a == 0 {
+				fmt.Printf("JIF, Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
+				instructionPointer = b
+				continue
+			}
+		case JUMP_IF_TRUE:
+			a := handleReadMemory(arguments, readParamOpts, data, 0)
+			b := handleReadMemory(arguments, readParamOpts, data, 1)
+			if a != 0 {
+				fmt.Printf("JIT: Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
+				instructionPointer = b
+				continue
+			}
+		case LESS_THAN:
+			a := handleReadMemory(arguments, readParamOpts, data, 0)
+			b := handleReadMemory(arguments, readParamOpts, data, 1)
+			result := a < b
+			fmt.Printf("LT: Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
+			if result {
+				data[arguments[2]] = 1
+			} else {
+				data[arguments[2]] = 0
+			}
+		case EQUALS:
+			a := handleReadMemory(arguments, readParamOpts, data, 0)
+			b := handleReadMemory(arguments, readParamOpts, data, 1)
+			result := a == b
+			fmt.Printf("EQ: Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
+			if result {
+				data[arguments[2]] = 1
+			} else {
+				data[arguments[2]] = 0
+			}
 		case STOP:
 			fmt.Println("The program has completed without error!")
 			return 0
@@ -135,6 +185,10 @@ func day51() {
 
 func day52() {
 	fmt.Println("Day 5.2")
+	programData := LoadProgramData("./day5_input.txt")
+	fmt.Println(programData)
+	InterpretProgram(programData, 5)
+	fmt.Printf("Opcodes: %d, %d, %d, %d, %d\n", ADD, MULT, STORE, GET, STOP)
 	fmt.Printf("The answer is: '%d'\n", 42)
 }
 
