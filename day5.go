@@ -1,58 +1,65 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Opcode int
+
 const (
 	ERROR Opcode = iota
-	ADD 
+	ADD
 	MULT
 	STORE
 	GET
 	STOP Opcode = 99
-) 
-
-type ParameterMode int
-const (
-	 POSITION ParameterMode = iota
-	 IMMEDIATE
 )
 
-var InstructionLen = map[Opcode]int {
-	ADD: 4,
-	MULT: 4,
+type ParameterMode int
+
+const (
+	POSITION ParameterMode = iota
+	IMMEDIATE
+)
+
+var InstructionLen = map[Opcode]int{
+	ADD:   3,
+	MULT:  3,
 	STORE: 1,
-	GET: 1,
-	STOP: 1,
-} 
+	GET:   1,
+	STOP:  1,
+}
 
 func takeDigits(cmd int, count int) (int, int) {
-	if cmd < 10 {
+	if cmd < 10 || count < 1 {
 		return cmd, 0
 	}
-	divisions := 0;
-	value := 0;
-	for cmd > 0 {
+	divisions := 1
+	value := 0
+	for ; count > 0; count-- {
 		digit := cmd % 10
+		value = value + divisions*digit
 		cmd = cmd / 10
-		divisions += 1
-		value = value + divisions * digit
+		divisions = divisions * 10
 	}
 	return value, cmd
 }
 
 func getInstructionWidth(code int) int {
-  return InstructionLen[Opcode(code)]
+	return InstructionLen[Opcode(code)]
 }
 
 func parseInstruction(cmd int) (Opcode, []ParameterMode) {
-	instruction, paramValue := takeDigits(cmd, 2)
-	paramCount := getInstructionWidth(instruction);
+	instruction, paramValue := takeDigits(cmd+1-1, 2)
+	if instruction == 99 {
+		return STOP, []ParameterMode{}
+	}
+	paramCount := getInstructionWidth(instruction)
 	if paramCount == 0 {
-		fmt.Printf("Illegal count encountered! Opcode %d gave %d\n", instruction, paramCount)
+		fmt.Printf("Illegal count encountered! Opcode %d from %d (%d) gave %d\n", instruction, cmd, paramValue, paramCount)
 		return ERROR, []ParameterMode{}
 	}
-	paramCommands := make([]ParameterMode, paramCount) 
+	paramCommands := make([]ParameterMode, paramCount)
 	for i := 0; i < paramCount; i++ {
 		param, newParam := takeDigits(paramValue, 1)
 		paramCommands[i] = ParameterMode(param)
@@ -61,46 +68,52 @@ func parseInstruction(cmd int) (Opcode, []ParameterMode) {
 	return Opcode(instruction), paramCommands
 }
 
-func handleReadMemory(reference int, mode ParameterMode, data []int) int {
-	if mode == IMMEDIATE {
-		return reference
+func handleReadMemory(reference []int, mode []ParameterMode, data []int, index int) int {
+	address := reference[index]
+	if mode[index] == IMMEDIATE {
+		return address
 	}
-	return data[reference]
+	return data[address]
 }
 
-func InterpretProgram(data []int) int {
+func InterpretProgram(data []int, input int) int {
 	for instructionPointer := 0; instructionPointer < len(data); {
-		controlChar := data[instructionPointer];
+		controlChar := data[instructionPointer]
 		instruction, readParamOpts := parseInstruction(controlChar)
 
 		arguments := make([]int, len(readParamOpts))
 		for i := 0; i < len(readParamOpts); i++ {
 			reference := instructionPointer + i + 1
-			arguments[i] = handleReadMemory(reference, readParamOpts[i], data)
-		}	
+			arguments[i] = data[reference]
+		}
 
 		fmt.Printf("Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
 		switch instruction {
 		case ERROR:
-			fmt.Printf("The program encountered an illegal error. Stack dump:\n%v \n", data[0:instructionPointer])
-				return 0
+			fmt.Printf("The program encountered an illegal error. Stack dump:\n%v \n", data[0:instructionPointer+1])
+			return 0
 		case ADD:
-			result := arguments[0] + arguments[1]
-			data[arguments[2]] = result;
+			a := handleReadMemory(arguments, readParamOpts, data, 0)
+			b := handleReadMemory(arguments, readParamOpts, data, 1)
+			fmt.Printf("Adding %d + %d and storing in register %d\n", a, b, arguments[2])
+			data[arguments[2]] = a + b
 		case MULT:
-	  	result := arguments[0] * arguments[1]
-			data[arguments[2]] = result;
+			a := handleReadMemory(arguments, readParamOpts, data, 0)
+			b := handleReadMemory(arguments, readParamOpts, data, 1)
+			result := a * b
+			data[arguments[2]] = result
 		case GET:
-			data[arguments[0]] = 1337
+			input = data[arguments[0]]
+			fmt.Printf("\nPrinting output: %d\n", input)
 		case STORE:
-			data[arguments[0]] = 7331
+			fmt.Printf("Storing %d in register %d\n", input, arguments[0])
+			data[arguments[0]] = input
 		case STOP:
 			fmt.Println("The program has completed without error!")
 			return 0
 		}
-		instructionPointer = 1 + instructionPointer + getInstructionWidth(controlChar)
+		instructionPointer = 1 + instructionPointer + len(arguments)
 	}
-
 
 	return 0
 }
@@ -115,8 +128,8 @@ func day51() {
 	fmt.Println("Day 5.1")
 	programData := LoadProgramData("./day5_input.txt")
 	fmt.Println(programData)
-  InterpretProgram(programData)
-  fmt.Printf("Opcodes: %d, %d, %d, %d, %d\n", ADD, MULT, STORE, GET, STOP) 
+	InterpretProgram(programData, 1)
+	fmt.Printf("Opcodes: %d, %d, %d, %d, %d\n", ADD, MULT, STORE, GET, STOP)
 	fmt.Printf("The answer is: '%d'\n", 42)
 }
 
