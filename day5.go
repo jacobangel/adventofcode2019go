@@ -87,7 +87,7 @@ func InterpretProgram(data []int, input int) int {
 			arguments[i] = data[reference]
 		}
 
-		fmt.Printf("Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
+		// fmt.Printf("Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
 		switch instruction {
 		case ERROR:
 			fmt.Printf("The program encountered an illegal error. Stack dump:\n%v \n", data[0:instructionPointer+1])
@@ -103,8 +103,8 @@ func InterpretProgram(data []int, input int) int {
 			result := a * b
 			data[arguments[2]] = result
 		case GET:
-			input = data[arguments[0]]
-			fmt.Printf("\nPrinting output: %d\n", input)
+			fmt.Printf("Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
+			fmt.Printf("\nPrinting output: %d\n", data[arguments[0]])
 		case STORE:
 			fmt.Printf("Storing %d in register %d\n", input, arguments[0])
 			data[arguments[0]] = input
