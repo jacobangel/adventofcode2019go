@@ -22,6 +22,7 @@ func loadFile(str string) string {
 	return strings.TrimSpace(string(dat))
 }
 
+// @TODO This is a bad name and needs to be changed.
 func ConvertToSlice(str string) []int {
 	if len(str) == 0 {
 		return []int{}
