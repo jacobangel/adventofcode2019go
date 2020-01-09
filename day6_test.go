@@ -10,31 +10,6 @@ func TestIsDay6(t *testing.T) {
 	assert.False(t, false)
 }
 
-func TestTree(t *testing.T) {
-	a := Node{"A", map[string]*Node{}}
-	b := Node{"B", map[string]*Node{}}
-	c := a.append("B")
-	assert.Equal(t, a.value, "A")
-	assert.Equal(t, a.children["B"].value, "B")
-	assert.Equal(t, *a.children["B"], b)
-	assert.Equal(t, b, c)
-}
-
-func TestFindNode(t *testing.T) {
-	a := Node{"A", map[string]*Node{}}
-	a.append("B")
-	d := a.append("D")
-	a.append("C")
-	d.append("G")
-	r := d.append("R")
-
-	c := findNode(&a, "D")
-	assert.Equal(t, "D", c.value, "D")
-	assert.Equal(t, "G", c.children["G"].value)
-	assert.Equal(t, "R", d.children["R"].value)
-	assert.Equal(t, r, *findNode(&a, "R"))
-}
-
 func TestGraph(t *testing.T) {
 	testGraph := Graph{map[string]*GraphNode{}}
 	testGraph.addNode("a")
