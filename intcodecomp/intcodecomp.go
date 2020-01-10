@@ -12,7 +12,6 @@ func Get10() int {
 	return 10
 }
 
-
 type Opcode int
 
 const (
@@ -55,34 +54,41 @@ func takeDigits(cmd int, count int) (int, int) {
 	value := 0
 	for ; count > 0; count-- {
 		digit := cmd % 10
-		value = value + divisions*digit
 		cmd = cmd / 10
+		value = value + divisions*digit
 		divisions = divisions * 10
 	}
 	return value, cmd
 }
 
-func getInstructionWidth(code int) int {
-	return InstructionLen[Opcode(code)]
+func getInstructionWidth(code Opcode) int {
+	return InstructionLen[code]
 }
 
 func parseInstruction(cmd int) (Opcode, []ParameterMode) {
 	instruction, paramValue := takeDigits(cmd+1-1, 2)
-	if instruction == 99 {
-		return STOP, []ParameterMode{}
+	inst := Opcode(instruction)
+	paramCommands, ok := getParameterModeList(inst, paramValue)
+	if !ok {
+		fmt.Printf("Error encountered! Opcode %d from %d (%d) gave %d\n", instruction, cmd, paramValue, inst)
+		inst = ERROR
 	}
-	paramCount := getInstructionWidth(instruction)
+	return inst, paramCommands
+}
+
+func getParameterModeList(inst Opcode, paramValue int) ([]ParameterMode, bool) {
+	paramCount := getInstructionWidth(inst)
 	if paramCount == 0 {
-		fmt.Printf("Illegal count encountered! Opcode %d from %d (%d) gave %d\n", instruction, cmd, paramValue, paramCount)
-		return ERROR, []ParameterMode{}
+		return []ParameterMode{}, false
 	}
+
 	paramCommands := make([]ParameterMode, paramCount)
 	for i := 0; i < paramCount; i++ {
 		param, newParam := takeDigits(paramValue, 1)
 		paramCommands[i] = ParameterMode(param)
 		paramValue = newParam
 	}
-	return Opcode(instruction), paramCommands
+	return paramCommands, true
 }
 
 func getMemoryAddress(argument []int, mode []ParameterMode, data []int, index int) int {
@@ -93,6 +99,10 @@ func getMemoryAddress(argument []int, mode []ParameterMode, data []int, index in
 	return data[address]
 }
 
+func makeArguments(parameterModes []ParameterMode, data []int) {
+
+}
+
 func InterpretProgram(data []int, input int) int {
 	output := 0
 	for instructionPointer := 0; instructionPointer < len(data); {
@@ -100,7 +110,8 @@ func InterpretProgram(data []int, input int) int {
 		instruction, readParamOpts := parseInstruction(controlChar)
 
 		arguments := make([]int, len(readParamOpts))
-		for i := 0; i < len(readParamOpts); i++ {
+		for i := 0; i < len(readParamOpts) && instructionPointer+i+1 < len(data); i++ {
+			fmt.Printf("%d, IP: %d to %d\n", len(data), (instructionPointer), instruction)
 			reference := instructionPointer + i + 1
 			arguments[i] = data[reference]
 		}
@@ -121,7 +132,7 @@ func InterpretProgram(data []int, input int) int {
 			result := a * b
 			data[arguments[2]] = result
 		case GET:
-			fmt.Printf("Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
+			fmt.Printf("Control Get: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
 			output = getMemoryAddress(arguments, readParamOpts, data, 0)
 			fmt.Printf("\nPrinting output: %d\n", output)
 		case STORE:
