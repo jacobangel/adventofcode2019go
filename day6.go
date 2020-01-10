@@ -135,7 +135,6 @@ func day61() {
 
 	fmt.Println("Day 6.1")
 	programData := loadFile("./day6_input.txt")
-	fmt.Println(programData)
 	graph := strToGraph(programData)
 	fmt.Printf("Graph: %v\n", graph)
 	count := sumOrbits(&graph, 0)

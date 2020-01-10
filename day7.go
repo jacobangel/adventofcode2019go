@@ -1,9 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func day71() {
 	fmt.Println("Day 7.1")
+
 	programData := LoadProgramData("./day7_input.txt")
 	fmt.Println(programData)
 	InterpretProgram(programData, 1)
