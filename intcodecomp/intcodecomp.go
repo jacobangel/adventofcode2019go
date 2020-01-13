@@ -53,10 +53,6 @@ func takeDigits(cmd int, count int) (int, int) {
 	return value, cmd
 }
 
-func getInstructionWidth(code Opcode) int {
-	return InstructionLen[code]
-}
-
 func parseInstruction(cmd int) (Opcode, []ParameterMode) {
 	instruction, paramValue := takeDigits(cmd+1-1, 2)
 	inst := Opcode(instruction)
@@ -69,7 +65,7 @@ func parseInstruction(cmd int) (Opcode, []ParameterMode) {
 }
 
 func getParameterModeList(inst Opcode, paramValue int) ([]ParameterMode, bool) {
-	paramCount := getInstructionWidth(inst)
+	paramCount := InstructionLen[inst]
 	if paramCount == 0 {
 		return []ParameterMode{}, false
 	}
@@ -90,10 +86,9 @@ func resolveValueFromMemory(address int, mode ParameterMode, data []int) int {
 	return data[address]
 }
 
-func makeArguments(parameterModes []ParameterMode, instructionPointer int, data []int) []int {
+func gatherArguments(parameterModes []ParameterMode, instructionPointer int, data []int) []int {
 	arguments := make([]int, len(parameterModes))
 	for i := 0; i < len(parameterModes) && instructionPointer+i+1 < len(data); i++ {
-		fmt.Printf("%d, IP: %d\n", len(data), (instructionPointer))
 		reference := instructionPointer + i + 1
 		arguments[i] = data[reference]
 	}
@@ -129,6 +124,7 @@ func operate(operation func([]int) int, rawArgs []int, readOpts []ParameterMode,
 		arguments[index] = resolveValueFromMemory(item, readOpts[index], data)
 	}
 	result := operation(arguments)
+	// this is ugly!
 	store(data, rawArgs, result)
 }
 
@@ -140,7 +136,7 @@ func store(data []int, args []int, value int) {
 
 /**
 Each instruction has a series of phases.
-1. operation
+1. operation, get value
 2. store
 3. jump (usually width)
 
@@ -150,11 +146,10 @@ func InterpretProgram(data []int, input int) int {
 	for instructionPointer := 0; instructionPointer < len(data); {
 		controlChar := data[instructionPointer]
 		instruction, readParamOpts := parseInstruction(controlChar)
-		arguments := makeArguments(readParamOpts, instructionPointer, data)
-		// fmt.Printf("Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
+		arguments := gatherArguments(readParamOpts, instructionPointer, data)
 
+		// handle operations with work
 		switch instruction {
-
 		case ERROR:
 			fmt.Printf("The program encountered an illegal error. Stack dump:\n%v \n", data[0:instructionPointer+1])
 			return -1
@@ -172,6 +167,19 @@ func InterpretProgram(data []int, input int) int {
 		case STORE:
 			store(data, arguments, input)
 
+		case LESS_THAN:
+			operate(lt, arguments, readParamOpts, data)
+
+		case EQUALS:
+			operate(eq, arguments, readParamOpts, data)
+
+		case STOP:
+			fmt.Println("The program has completed without error!")
+			return output
+		}
+
+		// handle jumps
+		switch instruction {
 		case JUMP_IF_FALSE:
 			a := resolveValueFromMemory(arguments[0], readParamOpts[0], data)
 			b := resolveValueFromMemory(arguments[1], readParamOpts[1], data)
@@ -189,17 +197,7 @@ func InterpretProgram(data []int, input int) int {
 				instructionPointer = b
 				continue
 			}
-		case LESS_THAN:
-			operate(lt, arguments, readParamOpts, data)
-
-		case EQUALS:
-			operate(eq, arguments, readParamOpts, data)
-
-		case STOP:
-			fmt.Println("The program has completed without error!")
-			return output
 		}
-
 		instructionPointer += 1 + len(arguments)
 	}
 
