@@ -4,14 +4,6 @@ import (
 	"fmt"
 )
 
-func main() {
-	fmt.Println("Hello")
-}
-
-func Get10() int {
-	return 10
-}
-
 type Opcode int
 
 const (
@@ -91,94 +83,124 @@ func getParameterModeList(inst Opcode, paramValue int) ([]ParameterMode, bool) {
 	return paramCommands, true
 }
 
-func getMemoryAddress(argument []int, mode []ParameterMode, data []int, index int) int {
-	address := argument[index]
-	if mode[index] == IMMEDIATE {
+func resolveValueFromMemory(address int, mode ParameterMode, data []int) int {
+	if mode == IMMEDIATE {
 		return address
 	}
 	return data[address]
 }
 
-func makeArguments(parameterModes []ParameterMode, data []int) {
+func makeArguments(parameterModes []ParameterMode, instructionPointer int, data []int) []int {
+	arguments := make([]int, len(parameterModes))
+	for i := 0; i < len(parameterModes) && instructionPointer+i+1 < len(data); i++ {
+		fmt.Printf("%d, IP: %d\n", len(data), (instructionPointer))
+		reference := instructionPointer + i + 1
+		arguments[i] = data[reference]
+	}
 
+	return arguments
 }
 
+func eq(args []int) int {
+	if args[0] == args[1] {
+		return 1
+	}
+	return 0
+}
+
+func lt(args []int) int {
+	if args[0] < args[1] {
+		return 1
+	}
+	return 0
+}
+
+func add(args []int) int {
+	return args[1] + args[0]
+}
+
+func mult(args []int) int {
+	return args[1] * args[0]
+}
+
+func operate(operation func([]int) int, rawArgs []int, readOpts []ParameterMode, data []int) {
+	arguments := make([]int, len(rawArgs))
+	for index, item := range rawArgs {
+		arguments[index] = resolveValueFromMemory(item, readOpts[index], data)
+	}
+	result := operation(arguments)
+	store(data, rawArgs, result)
+}
+
+func store(data []int, args []int, value int) {
+	destAddr := args[len(args)-1]
+	fmt.Printf("Storing %d in register %d\n", value, destAddr)
+	data[destAddr] = value
+}
+
+/**
+Each instruction has a series of phases.
+1. operation
+2. store
+3. jump (usually width)
+
+*/
 func InterpretProgram(data []int, input int) int {
 	output := 0
 	for instructionPointer := 0; instructionPointer < len(data); {
 		controlChar := data[instructionPointer]
 		instruction, readParamOpts := parseInstruction(controlChar)
-
-		arguments := make([]int, len(readParamOpts))
-		for i := 0; i < len(readParamOpts) && instructionPointer+i+1 < len(data); i++ {
-			fmt.Printf("%d, IP: %d to %d\n", len(data), (instructionPointer), instruction)
-			reference := instructionPointer + i + 1
-			arguments[i] = data[reference]
-		}
-
+		arguments := makeArguments(readParamOpts, instructionPointer, data)
 		// fmt.Printf("Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
+
 		switch instruction {
+
 		case ERROR:
 			fmt.Printf("The program encountered an illegal error. Stack dump:\n%v \n", data[0:instructionPointer+1])
 			return -1
+
 		case ADD:
-			a := getMemoryAddress(arguments, readParamOpts, data, 0)
-			b := getMemoryAddress(arguments, readParamOpts, data, 1)
-			// fmt.Printf("Adding %d + %d and storing in register %d\n", a, b, arguments[2])
-			data[arguments[2]] = a + b
+			operate(add, arguments, readParamOpts, data)
+
 		case MULT:
-			a := getMemoryAddress(arguments, readParamOpts, data, 0)
-			b := getMemoryAddress(arguments, readParamOpts, data, 1)
-			result := a * b
-			data[arguments[2]] = result
+			operate(mult, arguments, readParamOpts, data)
+
 		case GET:
-			fmt.Printf("Control Get: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
-			output = getMemoryAddress(arguments, readParamOpts, data, 0)
+			output = resolveValueFromMemory(arguments[0], readParamOpts[0], data)
 			fmt.Printf("\nPrinting output: %d\n", output)
+
 		case STORE:
-			fmt.Printf("Storing %d in register %d\n", input, arguments[0])
-			data[arguments[0]] = input
+			store(data, arguments, input)
+
 		case JUMP_IF_FALSE:
-			a := getMemoryAddress(arguments, readParamOpts, data, 0)
-			b := getMemoryAddress(arguments, readParamOpts, data, 1)
+			a := resolveValueFromMemory(arguments[0], readParamOpts[0], data)
+			b := resolveValueFromMemory(arguments[1], readParamOpts[1], data)
 			if a == 0 {
 				fmt.Printf("JIF, Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
 				instructionPointer = b
 				continue
 			}
+
 		case JUMP_IF_TRUE:
-			a := getMemoryAddress(arguments, readParamOpts, data, 0)
-			b := getMemoryAddress(arguments, readParamOpts, data, 1)
+			a := resolveValueFromMemory(arguments[0], readParamOpts[0], data)
+			b := resolveValueFromMemory(arguments[1], readParamOpts[1], data)
 			if a != 0 {
 				fmt.Printf("JIT: Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
 				instructionPointer = b
 				continue
 			}
 		case LESS_THAN:
-			a := getMemoryAddress(arguments, readParamOpts, data, 0)
-			b := getMemoryAddress(arguments, readParamOpts, data, 1)
-			result := a < b
-			fmt.Printf("LT: Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
-			if result {
-				data[arguments[2]] = 1
-			} else {
-				data[arguments[2]] = 0
-			}
+			operate(lt, arguments, readParamOpts, data)
+
 		case EQUALS:
-			a := getMemoryAddress(arguments, readParamOpts, data, 0)
-			b := getMemoryAddress(arguments, readParamOpts, data, 1)
-			result := a == b
-			fmt.Printf("EQ: Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
-			if result {
-				data[arguments[2]] = 1
-			} else {
-				data[arguments[2]] = 0
-			}
+			operate(eq, arguments, readParamOpts, data)
+
 		case STOP:
 			fmt.Println("The program has completed without error!")
 			return output
 		}
-		instructionPointer = 1 + instructionPointer + len(arguments)
+
+		instructionPointer += 1 + len(arguments)
 	}
 
 	return 0
