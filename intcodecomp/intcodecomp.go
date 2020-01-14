@@ -130,7 +130,6 @@ func operate(operation func([]int) int, rawArgs []int, readOpts []ParameterMode,
 
 func store(data []int, args []int, value int) {
 	destAddr := args[len(args)-1]
-	fmt.Printf("Storing %d in register %d\n", value, destAddr)
 	data[destAddr] = value
 }
 
@@ -141,8 +140,15 @@ Each instruction has a series of phases.
 3. jump (usually width)
 
 */
-func InterpretProgram(data []int, input int) int {
+func InterpretProgram(data []int, input []int) int {
 	output := 0
+	readInput := func() func() int {
+		counter := -1
+		return func() int {
+			counter += 1
+			return input[counter]
+		}
+	}()
 	for instructionPointer := 0; instructionPointer < len(data); {
 		controlChar := data[instructionPointer]
 		instruction, readParamOpts := parseInstruction(controlChar)
@@ -165,7 +171,7 @@ func InterpretProgram(data []int, input int) int {
 			fmt.Printf("\nPrinting output: %d\n", output)
 
 		case STORE:
-			store(data, arguments, input)
+			store(data, arguments, readInput())
 
 		case LESS_THAN:
 			operate(lt, arguments, readParamOpts, data)
@@ -184,7 +190,7 @@ func InterpretProgram(data []int, input int) int {
 			a := resolveValueFromMemory(arguments[0], readParamOpts[0], data)
 			b := resolveValueFromMemory(arguments[1], readParamOpts[1], data)
 			if a == 0 {
-				fmt.Printf("JIF, Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
+				// fmt.Printf("JIF, Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
 				instructionPointer = b
 				continue
 			}
@@ -193,7 +199,7 @@ func InterpretProgram(data []int, input int) int {
 			a := resolveValueFromMemory(arguments[0], readParamOpts[0], data)
 			b := resolveValueFromMemory(arguments[1], readParamOpts[1], data)
 			if a != 0 {
-				fmt.Printf("JIT: Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
+				// fmt.Printf("JIT: Control: %d, Inst: %d, readOps: %v, args: %d, index: %d\n", controlChar, instruction, readParamOpts, arguments, instructionPointer)
 				instructionPointer = b
 				continue
 			}
