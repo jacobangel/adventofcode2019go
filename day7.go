@@ -52,8 +52,7 @@ func FindMaxAmplificationSeq(programData []int) (int, []int) {
 		localdata := programData
 
 		for _, code := range perm {
-			newValueArr, _ := intcodecomp.InterpretProgram(localdata, []int{code, newValue})
-			newValue = newValueArr[0]
+			newValue = intcodecomp.InterpretProgram(localdata, []int{code, newValue})
 		}
 		if maxValue < newValue {
 			maxPerm = perm
@@ -66,27 +65,27 @@ func FindMaxAmplificationSeq(programData []int) (int, []int) {
 }
 
 func FindMaxAmplificationSeqLoop(programData []int) (int, []int) {
-	perms := getPermutations([]int{5,6,7,8,9})
+	// perms := getPermutations([]int{5,6,7,8,9})
 
-	maxValue := 0
-	var maxPerm []int
+	// maxValue := 0
+	// var maxPerm []int
 
-	for _, perm := range perms {
-		newValue := 0
-		localdata := programData
+	// for _, perm := range perms {
+	// 	newValue := 0
+	// 	localdata := programData
 
-		for _, code := range perm {
-			newValueArr, _ := intcodecomp.InterpretProgram(localdata, []int{code, newValue})
-			newValue = newValueArr[0]
-		}
-		if maxValue < newValue {
-			maxPerm = perm
-			maxValue = newValue
-		}
-	}
+	// 	for _, code := range perm {
+	// 		newValue = intcodecomp.InterpretProgram(localdata, []int{code, newValue})
+	// 	}
+	// 	if maxValue < newValue {
+	// 		maxPerm = perm
+	// 		maxValue = newValue
+	// 	}
+	// }
 
-	fmt.Printf("data: %d\nperms: %d\n", programData, perms)
-	return maxValue, maxPerm
+	// fmt.Printf("data: %d\nperms: %d\n", programData, perms)
+	// return maxValue, maxPerm
+	return 0, []int {}
 }
 
 
