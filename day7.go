@@ -50,8 +50,10 @@ func FindMaxAmplificationSeq(programData []int) (int, []int) {
 	for _, perm := range perms {
 		newValue := 0
 		localdata := programData
+
 		for _, code := range perm {
-			newValue = intcodecomp.InterpretProgram(localdata, []int{code, newValue})
+			newValueArr, _ := intcodecomp.InterpretProgram(localdata, []int{code, newValue})
+			newValue = newValueArr[0]
 		}
 		if maxValue < newValue {
 			maxPerm = perm
@@ -62,6 +64,31 @@ func FindMaxAmplificationSeq(programData []int) (int, []int) {
 	fmt.Printf("data: %d\nperms: %d\n", programData, perms)
 	return maxValue, maxPerm
 }
+
+func FindMaxAmplificationSeqLoop(programData []int) (int, []int) {
+	perms := getPermutations([]int{5,6,7,8,9})
+
+	maxValue := 0
+	var maxPerm []int
+
+	for _, perm := range perms {
+		newValue := 0
+		localdata := programData
+
+		for _, code := range perm {
+			newValueArr, _ := intcodecomp.InterpretProgram(localdata, []int{code, newValue})
+			newValue = newValueArr[0]
+		}
+		if maxValue < newValue {
+			maxPerm = perm
+			maxValue = newValue
+		}
+	}
+
+	fmt.Printf("data: %d\nperms: %d\n", programData, perms)
+	return maxValue, maxPerm
+}
+
 
 func day71() {
 	fmt.Println("Day 7.1")
@@ -76,8 +103,8 @@ func day72() {
 	fmt.Println("Day 7.2")
 	programData := LoadProgramData("./day7_input.txt")
 	fmt.Println(programData)
-	returnVal := intcodecomp.InterpretProgram(programData, []int{7})
-	fmt.Printf("The answer is: '%d'\n", returnVal)
+	returnVal, seq := FindMaxAmplificationSeqLoop(programData)
+	fmt.Printf("The answer is: '%d' and %d\n", returnVal, seq)
 }
 
 func day7() {
