@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 /**
@@ -53,6 +54,53 @@ func findIt(layerList [][]int) int {
 	return youknowIt
 }
 
+func renderImage(image [][]int, width int, height int) [][]int {
+	fmt.Println(image)
+	finalImage := make([][]int, height)
+	for index, _ := range finalImage {
+		newRow := make([]int, width)
+		finalImage[index] = newRow
+		for j, _ := range finalImage[index] {
+			finalImage[index][j] = -1
+		}
+	}
+	for i, layer := range image {
+		if i == 0 {
+			fmt.Printf("The length of the pixels are: %d\n", len(layer))
+		}
+		for x := 0; x < width; x++ {
+			for y := 0; y < height; y++ {
+
+				fmt.Printf("The pixel index is: %d, %d: %d \n", x, y, x*height+y)
+				pixel := layer[x*height+y]
+				currentPixel := finalImage[y][x]
+				if (finalImage[y][x] == -1) || currentPixel == 2 && (pixel == 1 || pixel == 0) {
+					fmt.Printf("Setting pixels: %d at (%d, %d)\n", pixel, x, y)
+					finalImage[y][x] = pixel
+				}
+			}
+		}
+	}
+
+	return finalImage
+}
+
+func printImage(image [][]int, width int, height int) string {
+	pic := make([]string, len(image))
+	for i, _ := range image {
+		row := make([]string, len(image[i]))
+		for j, _ := range row {
+			if image[i][j] == -10 {
+				row[j] = " "
+			} else {
+				row[j] = strconv.Itoa(image[i][j])
+			}
+		}
+		pic[i] = strings.Join(row, "")
+	}
+	return strings.Join(pic, "\n")
+}
+
 func day81() {
 	fmt.Println("Day 8.1")
 	programData := loadFile("./day8_input.txt")
@@ -63,6 +111,11 @@ func day81() {
 
 func day82() {
 	fmt.Println("Day 8.2")
+	programData := loadFile("./day8_input.txt")
+	message := parseImage(programData, 25, 6)
+	imageLayers := renderImage(message, 25, 6)
+	image := printImage(imageLayers, 25, 6)
+	fmt.Printf("%s\n", image)
 }
 
 func day8() {

@@ -168,7 +168,7 @@ func InterpretProgram(data []int, input []int) int {
 
 		case GET:
 			output = resolveValueFromMemory(arguments[0], readParamOpts[0], data)
-			fmt.Printf("\nPrinting output: %d\n", output)
+			// fmt.Printf("\nPrinting output: %d\n", output)
 
 		case STORE:
 			store(data, arguments, readInput())
@@ -180,7 +180,7 @@ func InterpretProgram(data []int, input []int) int {
 			operate(eq, arguments, readParamOpts, data)
 
 		case STOP:
-			fmt.Println("The program has completed without error!")
+			// fmt.Println("The program has completed without error!")
 			return output
 		}
 
