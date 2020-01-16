@@ -45,8 +45,8 @@ func TestRenderImage(t *testing.T) {
 	}, message2)
 	printedImage := printImage(message, 2, 2)
 	printedImage2 := printImage(message2, 3, 2)
-	expectedImage := "0 1\n1 0"
-	expectedImage2 := "0 1\n1 0"
+	expectedImage := "01\n10"
+	expectedImage2 := "010\n101"
 	assert.Equal(t, expectedImage, printedImage)
 	assert.Equal(t, expectedImage2, printedImage2)
 }

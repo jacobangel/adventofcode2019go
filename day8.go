@@ -68,14 +68,15 @@ func renderImage(image [][]int, width int, height int) [][]int {
 		if i == 0 {
 			fmt.Printf("The length of the pixels are: %d\n", len(layer))
 		}
-		for x := 0; x < width; x++ {
-			for y := 0; y < height; y++ {
+		for y := 0; y < height; y++ {
+			for x := 0; x < width; x++ {
 
-				fmt.Printf("The pixel index is: %d, %d: %d \n", x, y, x*height+y)
-				pixel := layer[x*height+y]
+				//			fmt.Printf("The pixel index is: %d, %d: %d \n", x, y, x*height+y)
+				pixelIndex := width*y + x
+				pixel := layer[pixelIndex]
 				currentPixel := finalImage[y][x]
-				if (finalImage[y][x] == -1) || currentPixel == 2 && (pixel == 1 || pixel == 0) {
-					fmt.Printf("Setting pixels: %d at (%d, %d)\n", pixel, x, y)
+				if (finalImage[y][x] == -1) || (currentPixel == 2 && (pixel == 1 || pixel == 0)) {
+					fmt.Printf("Setting pixels [%d][%d]: %d at (%d, %d)\n", i, pixelIndex, pixel, x, y)
 					finalImage[y][x] = pixel
 				}
 			}
@@ -90,7 +91,7 @@ func printImage(image [][]int, width int, height int) string {
 	for i, _ := range image {
 		row := make([]string, len(image[i]))
 		for j, _ := range row {
-			if image[i][j] == -10 {
+			if image[i][j] == 0 {
 				row[j] = " "
 			} else {
 				row[j] = strconv.Itoa(image[i][j])
