@@ -140,16 +140,20 @@ Each instruction has a series of phases.
 3. jump (usually width)
 
 */
-func InterpretProgram(data []int, input []int) int {
+func InterpretProgram(data []int, input []int, startingPointer int) (int, Opcode, []int, int) {
 	output := 0
-	readInput := func() func() int {
+	readInput := func() func() (int, bool) {
 		counter := -1
-		return func() int {
+		return func() (int, bool) {
 			counter += 1
-			return input[counter]
+			if counter >= len(input) {
+				return -1, false
+			}
+			return input[counter], true
 		}
 	}()
-	for instructionPointer := 0; instructionPointer < len(data); {
+
+	for instructionPointer := startingPointer; instructionPointer < len(data); {
 		controlChar := data[instructionPointer]
 		instruction, readParamOpts := parseInstruction(controlChar)
 		arguments := gatherArguments(readParamOpts, instructionPointer, data)
@@ -158,7 +162,7 @@ func InterpretProgram(data []int, input []int) int {
 		switch instruction {
 		case ERROR:
 			fmt.Printf("The program encountered an illegal error. Stack dump:\n%v \n", data[0:instructionPointer+1])
-			return -1
+			return -1, ERROR, data, instructionPointer
 
 		case ADD:
 			operate(add, arguments, readParamOpts, data)
@@ -168,10 +172,16 @@ func InterpretProgram(data []int, input []int) int {
 
 		case GET:
 			output = resolveValueFromMemory(arguments[0], readParamOpts[0], data)
+			// do i need  to return the increment?
+			return output, GET, data, instructionPointer + len(arguments) + 1
 			// fmt.Printf("\nPrinting output: %d\n", output)
 
 		case STORE:
-			store(data, arguments, readInput())
+			toRead, ok := readInput()
+			if !ok {
+				return output, GET, data, instructionPointer // + len(arguments) + 1
+			}
+			store(data, arguments, toRead)
 
 		case LESS_THAN:
 			operate(lt, arguments, readParamOpts, data)
@@ -181,7 +191,7 @@ func InterpretProgram(data []int, input []int) int {
 
 		case STOP:
 			// fmt.Println("The program has completed without error!")
-			return output
+			return data[len(data) - 2], STOP, data, instructionPointer
 		}
 
 		// handle jumps
@@ -207,5 +217,5 @@ func InterpretProgram(data []int, input []int) int {
 		instructionPointer += 1 + len(arguments)
 	}
 
-	return 0
+	return -1, ERROR, data, 0
 }

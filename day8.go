@@ -55,7 +55,7 @@ func findIt(layerList [][]int) int {
 }
 
 func renderImage(image [][]int, width int, height int) [][]int {
-	fmt.Println(image)
+	// fmt.Println(image)
 	finalImage := make([][]int, height)
 	for index, _ := range finalImage {
 		newRow := make([]int, width)
@@ -66,7 +66,7 @@ func renderImage(image [][]int, width int, height int) [][]int {
 	}
 	for i, layer := range image {
 		if i == 0 {
-			fmt.Printf("The length of the pixels are: %d\n", len(layer))
+			// fmt.Printf("The length of the pixels are: %d\n", len(layer))
 		}
 		for y := 0; y < height; y++ {
 			for x := 0; x < width; x++ {
@@ -76,7 +76,7 @@ func renderImage(image [][]int, width int, height int) [][]int {
 				pixel := layer[pixelIndex]
 				currentPixel := finalImage[y][x]
 				if (finalImage[y][x] == -1) || (currentPixel == 2 && (pixel == 1 || pixel == 0)) {
-					fmt.Printf("Setting pixels [%d][%d]: %d at (%d, %d)\n", i, pixelIndex, pixel, x, y)
+					// fmt.Printf("Setting pixels [%d][%d]: %d at (%d, %d)\n", i, pixelIndex, pixel, x, y)
 					finalImage[y][x] = pixel
 				}
 			}

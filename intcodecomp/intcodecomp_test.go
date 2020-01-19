@@ -33,9 +33,9 @@ func TestInterpretProgram(t *testing.T) {
 	input1 := 0
 	input2 := 8
 	input3 := 18
-	output1 := InterpretProgram(data, []int{input1})
-	output2 := InterpretProgram(data2, []int{input2})
-	output3 := InterpretProgram(data, []int{input3})
+	output1, _, _, _ := InterpretProgram(data, []int{input1}, 0)
+	output2, _, _, _ := InterpretProgram(data2, []int{input2}, 0)
+	output3, _, _, _ := InterpretProgram(data, []int{input3}, 0)
 	expectedOutput1 := 999
 	expectedOutput2 := 1000
 	expectedOutput3 := 1001
